@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AllWage">
+<meta name="theme-color" content="#0D0D0A">
+<link rel="manifest" id="manifest-link">
+<title>AllWage Field Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D0D0A;
+  --surface:#171714;
+  --surface2:#1F1F1B;
+  --border:#2A2A24;
+  --border2:#3A3A32;
+  --text:#E8E8E0;
+  --muted:#888880;
+  --accent:#F97316;
+  --accent-dim:#7C3910;
+  --valid:#4ADE80;
+  --valid-bg:#0A2E14;
+  --invalid:#F87171;
+  --invalid-bg:#2E0A0A;
+  --pending:#FBBF24;
+  --pending-bg:#2E1F00;
+  --font-head:'Syne',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-top:env(safe-area-inset-top,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-mono);font-size:14px;line-height:1.5;overflow:hidden}
+button{font-family:var(--font-mono);cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:var(--font-mono);font-size:13px;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;width:100%;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px}
+input[type=range]{padding:0;height:4px;accent-color:var(--accent);background:var(--border2);border:none;border-radius:2px}
+
+#app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top)}
+
+/* HEADER */
+#header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{font-family:var(--font-head);font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--text)}
+.logo span{color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:12px}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:background .3s}
+.conn-dot.connected{background:var(--valid);box-shadow:0 0 6px var(--valid)}
+.conn-dot.error{background:var(--invalid)}
+#settings-btn{color:var(--muted);font-size:20px;padding:4px;line-height:1;transition:color .2s}
+#settings-btn:hover{color:var(--text)}
+
+/* TABS */
+#tab-content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px}
+#tab-bar{display:flex;border-top:1px solid var(--border);flex-shrink:0;padding-bottom:var(--safe-bottom);background:var(--surface)}
+.tab-btn{flex:1;padding:10px 0 8px;font-family:var(--font-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;transition:color .2s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab-btn .tab-icon{font-size:18px}
+.tab-btn.active{color:var(--accent)}
+.tab-btn.active .tab-icon{filter:drop-shadow(0 0 4px var(--accent))}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.card-title{font-family:var(--font-head);font-weight:700;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.stat-val{font-family:var(--font-head);font-weight:800;font-size:22px;margin-top:2px}
+.stat-val.valid{color:var(--valid)}
+.stat-val.invalid{color:var(--invalid)}
+.stat-val.pending{color:var(--pending)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500;letter-spacing:.04em}
+.badge-valid{background:var(--valid-bg);color:var(--valid)}
+.badge-invalid{background:var(--invalid-bg);color:var(--invalid)}
+.badge-pending{background:var(--pending-bg);color:var(--pending)}
+.badge-in{background:#0D1F30;color:#60A5FA}
+.badge-out{background:#1A0D2E;color:#C084FC}
+
+/* FORM */
+.form-row{margin-bottom:12px}
+.toggle-row{display:flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden;margin-bottom:12px}
+.toggle-btn{flex:1;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;transition:background .2s,color .2s;color:var(--muted)}
+.toggle-btn.active-in{background:#0D1F30;color:#60A5FA}
+.toggle-btn.active-out{background:#1A0D2E;color:#C084FC}
+
+.dist-row{margin-bottom:12px}
+.dist-val{font-size:20px;font-weight:500;margin:4px 0;color:var(--text)}
+.outcome-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;margin-top:4px}
+
+.submit-btn{width:100%;padding:12px;background:var(--accent);color:#000;font-family:var(--font-head);font-weight:700;font-size:14px;letter-spacing:.04em;border-radius:8px;transition:opacity .2s,transform .1s}
+.submit-btn:active{transform:scale(.98);opacity:.9}
+.submit-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* EVENTS */
+.event-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;transition:border-color .3s}
+.event-item.new-event{border-color:var(--accent);animation:flash .6s ease-out forwards}
+@keyframes flash{0%{border-color:var(--accent);background:var(--accent-dim)}100%{border-color:var(--border);background:var(--surface)}}
+.event-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.event-name{font-weight:500;font-size:13px}
+.event-badges{display:flex;gap:4px;flex-wrap:wrap}
+.event-meta{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.event-coords{font-style:italic}
+.approve-row{display:flex;gap:6px;margin-top:8px}
+.approve-btn{flex:1;padding:6px;border-radius:5px;font-size:11px;font-weight:500;letter-spacing:.04em}
+.approve-btn.yes{background:var(--valid-bg);color:var(--valid);border:1px solid var(--valid)}
+.approve-btn.no{background:var(--invalid-bg);color:var(--invalid);border:1px solid var(--invalid)}
+
+/* LIVE FEED */
+.live-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--invalid)}
+.pulse.live{background:var(--valid);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.clear-btn{font-size:11px;color:var(--muted);padding:4px 8px;border:1px solid var(--border);border-radius:4px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:32px;margin-bottom:8px;opacity:.4}
+.empty-label{font-size:12px}
+
+/* SETTINGS OVERLAY */
+#settings-overlay{position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end}
+#settings-overlay.open{display:flex}
+#settings-panel{background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px 16px calc(20px + var(--safe-bottom));width:100%;max-height:80vh;overflow-y:auto}
+.settings-title{font-family:var(--font-head);font-weight:800;font-size:16px;margin-bottom:16px}
+.settings-row{margin-bottom:14px}
+.quick-btns{display:flex;gap:6px;margin-top:6px}
+.quick-btn{padding:5px 10px;border:1px solid var(--border2);border-radius:5px;font-size:11px;color:var(--muted)}
+.quick-btn:hover{border-color:var(--accent);color:var(--accent)}
+.settings-actions{display:flex;gap:8px;margin-top:16px}
+.save-btn{flex:1;padding:10px;background:var(--accent);color:#000;font-family:var(--font-head);font-weight:700;border-radius:7px}
+.cancel-btn{padding:10px 16px;border:1px solid var(--border2);border-radius:7px;color:var(--muted)}
+.test-result{font-size:11px;margin-top:6px;padding:4px 8px;border-radius:4px}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(60px + var(--safe-bottom) + 12px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:12px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;z-index:200}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="logo">All<span>Wage</span> <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono);font-weight:400">Field Ops</span></div>
+    <div class="header-right">
+      <div class="conn-dot" id="conn-dot" title="SSE connection"></div>
+      <button id="settings-btn" onclick="openSettings()" aria-label="Settings">⚙</button>
+    </div>
+  </div>
+
+  <div id="tab-content">
+    <!-- CLOCK IN TAB -->
+    <div id="tab-clockin">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-label">On-site</div><div class="stat-val" id="stat-onsite">—</div></div>
+        <div class="stat-card"><div class="stat-label">Valid today</div><div class="stat-val valid" id="stat-valid">—</div></div>
+        <div class="stat-card"><div class="stat-label">Invalid</div><div class="stat-val invalid" id="stat-invalid">—</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val pending" id="stat-pending">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Clock Event</div>
+
+        <div class="form-row">
+          <label>Employee</label>
+          <select id="emp-select" onchange="onEmpChange()">
+            <option value="emp-alice">Alice — Day Shift</option>
+            <option value="emp-bob">Bob — Contractors</option>
+            <option value="emp-john">John — Contractors (50m override)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>Site</label>
+          <select id="site-select">
+            <option value="site-alpha">Alpha Construction</option>
+          </select>
+        </div>
+
+        <div class="toggle-row">
+          <button class="toggle-btn active-in" id="type-in" onclick="setType('IN')">▶ Clock In</button>
+          <button class="toggle-btn" id="type-out" onclick="setType('OUT')">◀ Clock Out</button>
+        </div>
+
+        <div class="dist-row">
+          <label>Distance from site centre</label>
+          <div class="dist-val"><span id="dist-display">0</span> m</div>
+          <input type="range" id="dist-slider" min="0" max="500" step="1" value="0" oninput="onDistChange(this.value)">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px"><span>0m (centre)</span><span>500m (outside)</span></div>
+          <div id="outcome-pill" class="outcome-pill" style="background:var(--valid-bg);color:var(--valid)">● VALID</div>
+        </div>
+
+        <div class="form-row" style="margin-bottom:16px">
+          <label>Timestamp (SAST)</label>
+          <input type="datetime-local" id="ts-input">
+        </div>
+
+        <button class="submit-btn" id="submit-btn" onclick="submitClock()">Submit Clock Event</button>
+        <div id="submit-result" style="margin-top:8px;font-size:12px;text-align:center"></div>
+      </div>
+    </div>
+
+    <!-- LIVE FEED TAB -->
+    <div id="tab-live" style="display:none">
+      <div class="live-header">
+        <div class="live-badge"><div class="pulse" id="pulse-dot"></div><span id="live-label">Disconnected</span></div>
+        <button class="clear-btn" onclick="clearFeed()">Clear</button>
+      </div>
+      <div id="live-feed">
+        <div class="empty-state"><div class="empty-icon">📡</div><div class="empty-label">Waiting for events…<br>Connect to your backend in Settings.</div></div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Recent Events</span>
+        <button class="clear-btn" onclick="loadHistory()">↻ Refresh</button>
+      </div>
+      <div id="history-list"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-label">Tap refresh to load events.</div></div></div>
+    </div>
+  </div>
+
+  <div id="tab-bar">
+    <button class="tab-btn active" id="tb-clockin" onclick="switchTab('clockin')"><span class="tab-icon">⏱</span>Clock In</button>
+    <button class="tab-btn" id="tb-live" onclick="switchTab('live')"><span class="tab-icon">📡</span>Live</button>
+    <button class="tab-btn" id="tb-history" onclick="switchTab('history')"><span class="tab-icon">📋</span>History</button>
+  </div>
+</div>
+
+<div id="settings-overlay" onclick="overlayClick(event)">
+  <div id="settings-panel">
+    <div class="settings-title">Settings</div>
+    <div class="settings-row">
+      <label>Backend URL</label>
+      <input type="url" id="url-input" placeholder="http://localhost:8080">
+      <div class="quick-btns">
+        <button class="quick-btn" onclick="setUrl('http://localhost:8080')">localhost</button>
+        <button class="quick-btn" onclick="setUrl('https://')">ngrok / Railway</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <button class="quick-btn" style="width:100%;padding:7px" onclick="testConnection()">Test connection</button>
+      <div id="test-result" class="test-result"></div>
+    </div>
+    <div class="settings-actions">
+      <button class="cancel-btn" onclick="closeSettings()">Cancel</button>
+      <button class="save-btn" onclick="saveSettings()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SITE = {id:'site-alpha',name:'Alpha Construction',lat:-26.2041,lng:28.0473,radius:100};
+const EMPLOYEES = {
+  'emp-alice':{name:'Alice',tolerance:130,approval:false},
+  'emp-bob':  {name:'Bob',  tolerance:110,approval:true},
+  'emp-john': {name:'John', tolerance:150,approval:true},
+};
+
+let backendUrl = localStorage.getItem('aw_url') || 'http://localhost:8080';
+let activeTab = 'clockin';
+let sse = null;
+let liveEvents = [];
+let clockType = 'IN';
+let distMeters = 0;
+
+function init() {
+  const manifest = {name:'AllWage Field Ops',short_name:'AllWage',display:'standalone',
+    background_color:'#0D0D0A',theme_color:'#0D0D0A',start_url:'.',
+    icons:[{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="%230D0D0A"/><text x="96" y="130" font-size="110" text-anchor="middle" fill="%23F97316">A</text></svg>',sizes:'192x192',type:'image/svg+xml'}]};
+  const blob = new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+  document.getElementById('manifest-link').href = URL.createObjectURL(blob);
+
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('ts-input').value = now.toISOString().slice(0,16);
+  document.getElementById('url-input').value = backendUrl;
+
+  if (backendUrl && backendUrl !== 'http://localhost:8080') connectSse();
+  else connectSse();
+
+  updateOutcome();
+  loadStats();
+}
+
+function switchTab(t) {
+  ['clockin','live','history'].forEach(id => {
+    document.getElementById('tab-'+id).style.display = id===t ? '' : 'none';
+    document.getElementById('tb-'+id).classList.toggle('active', id===t);
+  });
+  activeTab = t;
+  if (t === 'history') loadHistory();
+  if (t === 'live' && liveEvents.length === 0) renderLiveFeed();
+}
+
+function setType(t) {
+  clockType = t;
+  document.getElementById('type-in').className = 'toggle-btn' + (t==='IN'?' active-in':'');
+  document.getElementById('type-out').className = 'toggle-btn' + (t==='OUT'?' active-out':'');
+}
+
+function onEmpChange() { updateOutcome(); }
+
+function onDistChange(v) {
+  distMeters = parseInt(v);
+  document.getElementById('dist-display').textContent = distMeters;
+  updateOutcome();
+}
+
+function updateOutcome() {
+  const emp = EMPLOYEES[document.getElementById('emp-select').value];
+  const pill = document.getElementById('outcome-pill');
+  if (distMeters <= emp.tolerance) {
+    pill.style.background = 'var(--valid-bg)';
+    pill.style.color = 'var(--valid)';
+    pill.textContent = '● VALID';
+  } else if (emp.approval) {
+    pill.style.background = 'var(--pending-bg)';
+    pill.style.color = 'var(--pending)';
+    pill.textContent = '◐ PENDING APPROVAL';
+  } else {
+    pill.style.background = 'var(--invalid-bg)';
+    pill.style.color = 'var(--invalid)';
+    pill.textContent = '✕ INVALID';
+  }
+}
+
+function getCoords() {
+  const delta = distMeters / 111319.5;
+  return {lat: SITE.lat + delta, lng: SITE.lng};
+}
+
+async function submitClock() {
+  const btn = document.getElementById('submit-btn');
+  const res = document.getElementById('submit-result');
+  const ts = document.getElementById('ts-input').value;
+  if (!ts) { showToast('Set a timestamp first'); return; }
+  const coords = getCoords();
+  const empId = document.getElementById('emp-select').value;
+  const body = {
+    employeeId: empId,
+    siteId: 'site-alpha',
+    timestamp: new Date(ts).toISOString().replace('Z','+02:00'),
+    latitude: parseFloat(coords.lat.toFixed(6)),
+    longitude: parseFloat(coords.lng.toFixed(6)),
+    accuracyMeters: 5.0,
+    type: clockType
+  };
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  res.textContent = '';
+  try {
+    const r = await fetch(backendUrl+'/api/clocks', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (r.ok) {
+      const s = data.validationStatus;
+      const col = s==='VALID'?'var(--valid)':s==='PENDING_APPROVAL'?'var(--pending)':'var(--invalid)';
+      res.innerHTML = `<span style="color:${col}">→ ${s}</span>  id: ${data.id?.slice(0,8)}…`;
+      showToast('Event submitted — '+s);
+      loadStats();
+    } else {
+      res.style.color='var(--invalid)';
+      res.textContent = r.status+': '+(data.message||JSON.stringify(data));
+    }
+  } catch(e) {
+    res.style.color='var(--invalid)';
+    res.textContent = 'Connection failed — check Settings';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Submit Clock Event';
+}
+
+async function loadHistory() {
+  const el = document.getElementById('history-list');
+  el.innerHTML = '<div class="empty-state"><div class="empty-label">Loading…</div></div>';
+  try {
+    const r = await fetch(backendUrl+'/api/clocks');
+    const data = await r.json();
+    if (!data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-label">No events yet.</div></div>';
+      return;
+    }
+    el.innerHTML = data.slice().reverse().slice(0,50).map(e => eventCard(e, true)).join('');
+    updateStatsFromEvents(data);
+  } catch {
+    el.innerHTML = '<div class="empty-state"><div class="empty-label" style="color:var(--invalid)">Could not load — check Settings</div></div>';
+  }
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch(backendUrl+'/api/clocks');
+    const data = await r.json();
+    updateStatsFromEvents(data);
+  } catch {}
+}
+
+function updateStatsFromEvents(events) {
+  const today = new Date().toDateString();
+  const todayEvts = events.filter(e => new Date(e.timestamp).toDateString()===today);
+  const valid = todayEvts.filter(e=>e.validationStatus==='VALID').length;
+  const invalid = todayEvts.filter(e=>e.validationStatus==='INVALID').length;
+  const pending = todayEvts.filter(e=>e.validationStatus==='PENDING_APPROVAL').length;
+  const byEmp = {};
+  todayEvts.forEach(e => { if (!byEmp[e.employeeId] || new Date(e.timestamp)>new Date(byEmp[e.employeeId].timestamp)) byEmp[e.employeeId]=e; });
+  const onsite = Object.values(byEmp).filter(e=>e.type==='IN'&&e.validationStatus==='VALID').length;
+  document.getElementById('stat-onsite').textContent = onsite;
+  document.getElementById('stat-valid').textContent = valid;
+  document.getElementById('stat-invalid').textContent = invalid;
+  document.getElementById('stat-pending').textContent = pending;
+}
+
+function eventCard(e, showApprove) {
+  const ts = new Date(e.timestamp);
+  const timeStr = ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const dateStr = ts.toLocaleDateString([],{month:'short',day:'numeric'});
+  const empName = EMPLOYEES[e.employeeId]?.name || e.employeeId;
+  const statusBadge = e.validationStatus==='VALID'?'<span class="badge badge-valid">VALID</span>':
+    e.validationStatus==='INVALID'?'<span class="badge badge-invalid">INVALID</span>':
+    '<span class="badge badge-pending">PENDING</span>';
+  const typeBadge = e.type==='IN'?'<span class="badge badge-in">IN</span>':'<span class="badge badge-out">OUT</span>';
+  const approveRow = showApprove && e.validationStatus==='PENDING_APPROVAL' ?
+    `<div class="approve-row">
+      <button class="approve-btn yes" onclick="doApprove('${e.id}','approve')">✓ Approve</button>
+      <button class="approve-btn no" onclick="doApprove('${e.id}','reject')">✕ Reject</button>
+    </div>` : '';
+  return `<div class="event-item" id="ev-${e.id}">
+    <div class="event-top">
+      <span class="event-name">${empName}</span>
+      <div class="event-badges">${typeBadge}${statusBadge}</div>
+    </div>
+    <div class="event-meta">
+      <span>${dateStr} ${timeStr} SAST</span>
+      <span class="event-coords">${e.latitude?.toFixed(4)}, ${e.longitude?.toFixed(4)}</span>
+    </div>
+    ${approveRow}
+  </div>`;
+}
+
+async function doApprove(id, action) {
+  try {
+    const r = await fetch(`${backendUrl}/api/clocks/${id}/${action}`, {method:'PATCH'});
+    if (r.ok) {
+      showToast(action==='approve'?'Approved ✓':'Rejected ✕');
+      loadHistory();
+    } else {
+      showToast('Failed: '+r.status);
+    }
+  } catch {
+    showToast('Connection failed');
+  }
+}
+
+function connectSse() {
+  if (sse) { sse.close(); sse = null; }
+  setConnState('connecting');
+  try {
+    sse = new EventSource(backendUrl+'/api/clocks/stream');
+    sse.addEventListener('clock-event', e => {
+      const evt = JSON.parse(e.data);
+      liveEvents.unshift(evt);
+      if (liveEvents.length > 100) liveEvents.pop();
+      renderLiveFeed();
+      loadStats();
+      showToast((EMPLOYEES[evt.employeeId]?.name||evt.employeeId)+' clocked '+evt.type+' — '+evt.validationStatus);
+    });
+    sse.onopen = () => setConnState('connected');
+    sse.onerror = () => { setConnState('error'); setTimeout(connectSse, 5000); };
+  } catch {
+    setConnState('error');
+  }
+}
+
+function setConnState(state) {
+  const dot = document.getElementById('conn-dot');
+  const pulse = document.getElementById('pulse-dot');
+  const label = document.getElementById('live-label');
+  dot.className = 'conn-dot' + (state==='connected'?' connected':state==='error'?' error':'');
+  pulse.className = 'pulse' + (state==='connected'?' live':'');
+  label.textContent = state==='connected'?'Live':'error'===state?'Disconnected — retrying':'Connecting…';
+}
+
+function renderLiveFeed() {
+  const el = document.getElementById('live-feed');
+  if (!liveEvents.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-label">Waiting for events…<br>Connect to your backend in Settings.</div></div>';
+    return;
+  }
+  el.innerHTML = liveEvents.map((e,i) => {
+    const card = eventCard(e, false);
+    return card.replace('class="event-item"', `class="event-item${i===0?' new-event':''}"`)
+  }).join('');
+}
+
+function clearFeed() { liveEvents = []; renderLiveFeed(); }
+
+function openSettings() {
+  document.getElementById('url-input').value = backendUrl;
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('test-result').textContent = '';
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+
+function setUrl(u) {
+  document.getElementById('url-input').value = u;
+  document.getElementById('url-input').focus();
+}
+
+async function testConnection() {
+  const url = document.getElementById('url-input').value.trim();
+  const el = document.getElementById('test-result');
+  el.textContent = 'Testing…';
+  el.style.color = 'var(--muted)';
+  el.style.background = 'transparent';
+  try {
+    const r = await fetch(url.replace(/\/$/,'')+'/api/clocks', {signal:AbortSignal.timeout(4000)});
+    if (r.ok) {
+      el.style.color = 'var(--valid)';
+      el.style.background = 'var(--valid-bg)';
+      el.textContent = '✓ Connected — '+r.status+' OK';
+    } else {
+      el.style.color = 'var(--invalid)';
+      el.style.background = 'var(--invalid-bg)';
+      el.textContent = '✕ Server error: '+r.status;
+    }
+  } catch(e) {
+    el.style.color = 'var(--invalid)';
+    el.style.background = 'var(--invalid-bg)';
+    el.textContent = '✕ '+( e.name==='TimeoutError'?'Timeout — server unreachable':'Could not connect');
+  }
+}
+
+function saveSettings() {
+  const url = document.getElementById('url-input').value.trim().replace(/\/$/,'');
+  if (!url) return;
+  backendUrl = url;
+  localStorage.setItem('aw_url', url);
+  closeSettings();
+  connectSse();
+  loadStats();
+  showToast('Saved — reconnecting…');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+init();
+</script>
+</body>
+</html>
