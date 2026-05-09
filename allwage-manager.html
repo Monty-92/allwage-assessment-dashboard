@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AllWage Ops">
+<meta name="theme-color" content="#0b0f14">
+<title>AllWage — Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0f14;--bg2:#0d1218;--surface:#111820;--surface2:#151e28;--border:#1c2733;--border2:#243040;--amber:#f5a623;--amber-d:#3d2800;--green:#27ae60;--green-d:#0a2d18;--red:#e74c3c;--red-d:#2d0e0a;--yellow:#f1c40f;--yellow-d:#2d2400;--blue:#2e86de;--text:#dce8f0;--dim:#5a7080;--muted:#243040;--syne:'Syne',sans-serif;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+
+/* Header */
+header{padding:calc(var(--safe-top) + 10px) 16px 10px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.wordmark{font-family:var(--syne);font-weight:800;font-size:17px;letter-spacing:.02em;color:var(--amber)}
+.wordmark sup{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--dim);vertical-align:super;margin-left:2px}
+.header-right{display:flex;align-items:center;gap:10px}
+.sse-indicator{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--dim)}
+.sse-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .4s}
+.sse-dot.live{background:var(--green);box-shadow:0 0 5px var(--green);animation:ssePulse 2s infinite}
+.sse-dot.error{background:var(--red)}
+@keyframes ssePulse{0%,100%{opacity:1}50%{opacity:.35}}
+.icon-btn{background:none;border:none;color:var(--dim);cursor:pointer;padding:5px;display:flex;align-items:center;border-radius:6px;transition:color .15s,background .15s}
+.icon-btn:active{background:var(--muted);color:var(--text)}
+
+/* Tab panels */
+main{flex:1;overflow:hidden;position:relative}
+.panel{position:absolute;inset:0;overflow-y:auto;padding:14px;display:none;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.panel.active{display:flex}
+
+/* Bottom nav */
+nav{background:var(--surface);border-top:1px solid var(--border);padding-bottom:var(--safe-bot);display:flex;flex-shrink:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 7px;background:none;border:none;color:var(--dim);cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;position:relative;transition:color .15s}
+.nav-item svg{width:21px;height:21px;stroke-width:1.8}
+.nav-item.active{color:var(--amber)}
+.nav-item.active::after{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--amber);border-radius:0 0 2px 2px}
+.nbadge{position:absolute;top:5px;right:calc(50% - 18px);background:var(--red);color:#fff;font-size:9px;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;font-weight:700;display:none}
+.nbadge.show{display:flex}
+
+/* Section headers */
+.section-hdr{font-family:var(--syne);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);padding-bottom:8px;border-bottom:1px solid var(--border);flex-shrink:0}
+
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 12px}
+.stat-val{font-family:var(--mono);font-size:30px;font-weight:500;line-height:1}
+.stat-val.g{color:var(--green)}.stat-val.r{color:var(--red)}.stat-val.y{color:var(--yellow)}.stat-val.a{color:var(--amber)}
+.stat-lbl{font-family:var(--syne);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:5px}
+
+/* Event cards */
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.event-card.v{border-left:3px solid var(--green)}.event-card.i{border-left:3px solid var(--red)}.event-card.p{border-left:3px solid var(--yellow)}
+.event-card.new-flash{animation:slideIn .2s ease,flash .6s ease}
+@keyframes flash{0%,100%{background:var(--surface)}50%{background:var(--surface2)}}
+.ev-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.ev-emp{font-family:var(--syne);font-weight:700;font-size:14px}
+.ev-time{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.ev-row2{display:flex;align-items:center;gap:8px}
+.ev-meta{font-family:var(--mono);font-size:11px;color:var(--dim);flex:1}
+.chip{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+.chip::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor}
+.chip.v{background:var(--green-d);color:var(--green)}.chip.i{background:var(--red-d);color:var(--red)}.chip.p{background:var(--yellow-d);color:var(--yellow)}
+.approve-row{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.act-btn{flex:1;padding:8px;border-radius:7px;border:1px solid;font-family:var(--syne);font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:opacity .15s}
+.act-btn:active{opacity:.7}
+.act-btn.approve{background:var(--green-d);border-color:var(--green);color:var(--green)}
+.act-btn.reject{background:var(--red-d);border-color:var(--red);color:var(--red)}
+.act-btn:disabled{opacity:.4;cursor:default}
+
+/* Pending panel */
+.pending-empty{text-align:center;padding:50px 20px;color:var(--dim);font-family:var(--mono);font-size:12px;line-height:1.9}
+
+/* Sites panel */
+.site-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.site-header{padding:14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.site-name{font-family:var(--syne);font-weight:700;font-size:14px}
+.site-meta{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
+.site-chevron{color:var(--dim);font-size:16px;transition:transform .2s}
+.site-body{display:none;border-top:1px solid var(--border);padding:12px}
+.site-body.open{display:block}
+.site-chevron.open{transform:rotate(90deg)}
+.info-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-row span:first-child{color:var(--dim);font-family:var(--syne);font-size:11px;letter-spacing:.04em}
+.info-row span:last-child{font-family:var(--mono);font-size:11px;color:var(--text)}
+.sub-section{font-family:var(--syne);font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin:10px 0 6px}
+
+/* Stats panel */
+.stats-section-title{font-family:var(--syne);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-top:6px;margin-bottom:-2px}
+
+/* Toast */
+#toast{position:fixed;bottom:calc(var(--safe-bot) + 72px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface2);border:1px solid var(--border2);border-radius:100px;padding:10px 20px;font-family:var(--mono);font-size:12px;color:var(--text);white-space:nowrap;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:80;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:var(--green);color:var(--green)}
+#toast.error{border-color:var(--red);color:var(--red)}
+
+/* Offline banner */
+#offline-banner{position:fixed;top:0;left:0;right:0;background:#2d0e0a;border-bottom:1px solid var(--red);padding:calc(var(--safe-top) + 6px) 16px 6px;font-family:var(--mono);font-size:10px;color:var(--red);text-align:center;z-index:70;display:none}
+body.offline #offline-banner{display:block}
+
+/* Settings */
+#settings-modal{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);display:none;align-items:flex-end}
+#settings-modal.open{display:flex}
+.settings-sheet{background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;width:100%;padding:20px 20px calc(20px + var(--safe-bot));display:flex;flex-direction:column;gap:14px;animation:sheetUp .25s ease}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.st-title{font-family:var(--syne);font-weight:800;font-size:18px;color:var(--amber);display:flex;justify-content:space-between;align-items:center}
+.close-btn{width:28px;height:28px;border-radius:50%;background:var(--muted);border:none;color:var(--dim);cursor:pointer;font-size:14px}
+.fl{display:flex;flex-direction:column;gap:5px}
+.fl label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+input[type="url"],input[type="text"]{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;width:100%}
+input:focus{outline:none;border-color:var(--amber)}
+.sv-btn{width:100%;padding:13px;background:var(--amber);border:none;border-radius:8px;color:var(--bg);font-family:var(--syne);font-size:15px;font-weight:800;letter-spacing:.06em;cursor:pointer}
+.hint{font-size:11px;color:var(--dim);font-family:var(--mono);line-height:1.6}
+
+/* Debug */
+#debug-panel{position:fixed;bottom:0;left:0;right:0;background:#050e08;border-top:1px solid #0d3018;padding:8px 12px calc(var(--safe-bot) + 8px);font-family:var(--mono);font-size:10px;color:#27ae60;max-height:130px;overflow-y:auto;display:none;z-index:30;-webkit-overflow-scrolling:touch}
+body.debug-mode #debug-panel{display:block}
+.dl{padding:1px 0;border-bottom:1px solid #0a1a10}.dl.e{color:var(--red)}.dl.w{color:var(--yellow)}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="offline-banner">⚠ NO CONNECTION — Live feed paused</div>
+<div id="app">
+  <header>
+    <div class="wordmark">AllWage<sup>OPS</sup></div>
+    <div class="header-right">
+      <div class="sse-indicator"><div class="sse-dot" id="sse-dot"></div><span id="sse-lbl">OFFLINE</span></div>
+      <button class="icon-btn" onclick="refreshAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+      <button class="icon-btn" onclick="openSettings()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+  </header>
+
+  <main>
+    <!-- LIVE FEED -->
+    <div id="panel-feed" class="panel active">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val g" id="st-valid">—</div><div class="stat-lbl">Valid</div></div>
+        <div class="stat-card"><div class="stat-val r" id="st-invalid">—</div><div class="stat-lbl">Invalid</div></div>
+        <div class="stat-card"><div class="stat-val y" id="st-pending">—</div><div class="stat-lbl">Pending</div></div>
+        <div class="stat-card"><div class="stat-val a" id="st-total">—</div><div class="stat-lbl">Total</div></div>
+      </div>
+      <div class="section-hdr">Live Feed</div>
+      <div id="feed-list"><div style="text-align:center;padding:40px 20px;color:var(--dim);font-family:var(--mono);font-size:12px">Connecting to live feed…</div></div>
+    </div>
+
+    <!-- PENDING -->
+    <div id="panel-pending" class="panel">
+      <div class="section-hdr">Pending Approvals</div>
+      <div id="pending-list"><div class="pending-empty">No pending approvals.<br>All clear.</div></div>
+    </div>
+
+    <!-- SITES -->
+    <div id="panel-sites" class="panel">
+      <div class="section-hdr">Sites & Teams</div>
+      <div id="sites-list"><div style="padding:30px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:12px">Loading…</div></div>
+    </div>
+
+    <!-- STATS -->
+    <div id="panel-stats" class="panel">
+      <div class="section-hdr">Summary Statistics</div>
+      <div class="stats-section-title">All Time</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val g" id="sts-valid">—</div><div class="stat-lbl">Valid Events</div></div>
+        <div class="stat-card"><div class="stat-val r" id="sts-invalid">—</div><div class="stat-lbl">Invalid Events</div></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val y" id="sts-pending">—</div><div class="stat-lbl">Pending</div></div>
+        <div class="stat-card"><div class="stat-val a" id="sts-headcount">—</div><div class="stat-lbl">On Site Now</div></div>
+      </div>
+      <div class="stats-section-title">By Employee</div>
+      <div id="emp-breakdown"><div style="color:var(--dim);font-family:var(--mono);font-size:12px;padding:10px 0">No data yet.</div></div>
+    </div>
+  </main>
+
+  <nav>
+    <button class="nav-item active" id="nav-feed" onclick="switchTab('feed')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l1.83-1.83a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      Live
+    </button>
+    <button class="nav-item" id="nav-pending" onclick="switchTab('pending')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Pending
+      <div class="nbadge" id="pending-badge">0</div>
+    </button>
+    <button class="nav-item" id="nav-sites" onclick="switchTab('sites')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Sites
+    </button>
+    <button class="nav-item" id="nav-stats" onclick="switchTab('stats')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Stats
+    </button>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<div id="settings-modal">
+  <div class="settings-sheet">
+    <div class="st-title">Settings <button class="close-btn" onclick="closeSettings()">✕</button></div>
+    <div class="fl">
+      <label>Backend URL</label>
+      <input type="url" id="s-url" placeholder="http://localhost:8080">
+      <div class="hint">Local: http://localhost:8080 · ngrok: https://…ngrok-free.app · Railway: https://…railway.app</div>
+    </div>
+    <div class="fl">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)">
+        <input type="checkbox" id="s-debug" style="width:15px;height:15px;accent-color:var(--amber);">
+        Debug mode (API log)
+      </label>
+    </div>
+    <button class="sv-btn" onclick="saveSettings()">Save & Reconnect</button>
+    <div class="hint" style="border-top:1px solid var(--border);padding-top:12px">
+      Seed data: emp-alice (Day Shift), emp-bob (Contractors strict), emp-john (Contractors +50m)<br>
+      Site centre: -26.2041, 28.0473 · Radius: 100m
+    </div>
+  </div>
+</div>
+
+<div id="debug-panel"></div>
+
+<script>
+var CFG={url:localStorage.getItem('awm_url')||'http://localhost:8080',debug:localStorage.getItem('awm_debug')==='true'};
+var allEvents=[],eventSource=null,toastTimer=null;
+
+var ERR={network:"Can't reach AllWage. Check the backend URL in Settings.",server:"AllWage encountered an error. Try again in a moment.",not_found:"Record not found.",bad_request:"Invalid request. Check the data and try again.",approve_fail:"Couldn't approve this event. It may have already been resolved.",reject_fail:"Couldn't reject this event. It may have already been resolved.",load_fail:"Couldn't load data. Check your connection."};
+
+document.addEventListener('DOMContentLoaded',function(){applyConfig();connectSSE();loadAll();detectOffline();});
+
+function applyConfig(){document.getElementById('s-url').value=CFG.url;document.getElementById('s-debug').checked=CFG.debug;document.body.classList.toggle('debug-mode',CFG.debug);}
+
+// ── SSE ──────────────────────────────────────────────────────────────────
+function connectSSE(){if(eventSource){eventSource.close();eventSource=null;}setSseStatus('connecting');try{eventSource=new EventSource(CFG.url+'/api/clocks/stream');eventSource.addEventListener('clock-event',function(e){try{var ev=JSON.parse(e.data);if(!allEvents.find(function(x){return x.id===ev.id;})){allEvents.unshift(ev);renderFeedCard(ev,'new');}updateStats();updatePendingBadge();}catch(err){}});eventSource.onopen=function(){setSseStatus('live');};eventSource.onerror=function(){setSseStatus('error');setTimeout(connectSSE,6000);};}catch(e){setSseStatus('error');}}
+
+function setSseStatus(s){var dot=document.getElementById('sse-dot');var lbl=document.getElementById('sse-lbl');dot.className='sse-dot'+(s==='live'?' live':s==='error'?' error':'');lbl.textContent=s==='live'?'LIVE':s==='error'?'ERROR':'CONN…';}
+
+// ── Data loading ──────────────────────────────────────────────────────────
+async function loadAll(){await loadEvents();loadSites();}
+
+async function loadEvents(){try{var r=await fetch(CFG.url+'/api/clocks');if(!r.ok)throw new Error(r.status);var data=await r.json();allEvents=data.sort(function(a,b){return new Date(b.timestamp)-new Date(a.timestamp);});renderFeed();updateStats();updatePendingBadge();renderPending();renderStatsPanel();}catch(e){dbg('e','Load events: '+e.message);document.getElementById('feed-list').innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--dim);font-family:var(--mono);font-size:12px">'+ERR.load_fail+'</div>';}}
+
+async function loadSites(){try{var r=await fetch(CFG.url+'/api/sites');if(!r.ok)throw new Error(r.status);var data=await r.json();renderSites(data);}catch(e){dbg('e','Load sites: '+e.message);document.getElementById('sites-list').innerHTML='<div style="padding:30px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:12px">Couldn\'t load site data.</div>';}}
+
+async function refreshAll(){loadAll();connectSSE();}
+
+// ── Rendering ──────────────────────────────────────────────────────────────
+function renderFeed(){var el=document.getElementById('feed-list');if(!allEvents.length){el.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--dim);font-family:var(--mono);font-size:12px;line-height:1.9">No events yet.<br>Submit a clock-in to see it here.</div>';return;}el.innerHTML='';allEvents.slice(0,60).forEach(function(ev){el.appendChild(buildCard(ev,''));});}
+
+function renderFeedCard(ev,cls){var el=document.getElementById('feed-list');var empty=el.querySelector('[data-empty]');if(empty)el.innerHTML='';var card=buildCard(ev,cls+' new-flash');el.prepend(card);}
+
+function buildCard(ev,extraCls){var div=document.createElement('div');var sc=statusClass(ev.validationStatus);div.className='event-card '+sc+' '+extraCls;div.id='card-'+ev.id;var actions=ev.validationStatus==='PENDING_APPROVAL'?'<div class="approve-row"><button class="act-btn approve" onclick="doApprove(\''+ev.id+'\',this)">✓ Approve</button><button class="act-btn reject" onclick="doReject(\''+ev.id+'\',this)">✗ Reject</button></div>':'';div.innerHTML='<div class="ev-row1"><span class="ev-emp">'+ev.employeeId+'</span><span class="ev-time">'+fmtTs(ev.timestamp)+'</span></div><div class="ev-row2"><span class="ev-meta">'+ev.type+' · '+(ev.siteId||'—')+'</span><span class="chip '+sc+'">'+fmtStatus(ev.validationStatus)+'</span></div>'+actions;return div;}
+
+function renderPending(){var pending=allEvents.filter(function(e){return e.validationStatus==='PENDING_APPROVAL';});var el=document.getElementById('pending-list');if(!pending.length){el.innerHTML='<div class="pending-empty">No pending approvals.<br>All clear ✓</div>';return;}el.innerHTML='';pending.forEach(function(ev){el.appendChild(buildCard(ev,''));});}
+
+function renderStatsPanel(){var valid=allEvents.filter(function(e){return e.validationStatus==='VALID';}).length;var invalid=allEvents.filter(function(e){return e.validationStatus==='INVALID';}).length;var pending=allEvents.filter(function(e){return e.validationStatus==='PENDING_APPROVAL';}).length;document.getElementById('sts-valid').textContent=valid;document.getElementById('sts-invalid').textContent=invalid;document.getElementById('sts-pending').textContent=pending;// Headcount: last event per employee, VALID IN
+var byEmp={};allEvents.forEach(function(e){if(!byEmp[e.employeeId]||new Date(e.timestamp)>new Date(byEmp[e.employeeId].timestamp))byEmp[e.employeeId]=e;});var headcount=Object.values(byEmp).filter(function(e){return e.type==='IN'&&e.validationStatus==='VALID';}).length;document.getElementById('sts-headcount').textContent=headcount;// Per-employee table
+var counts={};allEvents.forEach(function(e){if(!counts[e.employeeId])counts[e.employeeId]={v:0,i:0,p:0};if(e.validationStatus==='VALID')counts[e.employeeId].v++;else if(e.validationStatus==='INVALID')counts[e.employeeId].i++;else if(e.validationStatus==='PENDING_APPROVAL')counts[e.employeeId].p++;});var el=document.getElementById('emp-breakdown');var entries=Object.entries(counts);if(!entries.length){el.innerHTML='<div style="color:var(--dim);font-family:var(--mono);font-size:12px;padding:10px 0">No data yet.</div>';return;}el.innerHTML=entries.map(function(kv){return'<div class="event-card v" style="margin-bottom:8px"><div class="ev-row1"><span class="ev-emp">'+kv[0]+'</span></div><div style="display:flex;gap:8px;margin-top:6px"><span class="chip v">'+kv[1].v+' valid</span><span class="chip i">'+kv[1].i+' invalid</span>'+(kv[1].p?'<span class="chip p">'+kv[1].p+' pending</span>':'')+'</div></div>';}).join('');}
+
+function renderSites(sites){var el=document.getElementById('sites-list');if(!sites||!sites.length){el.innerHTML='<div style="padding:30px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:12px">No sites configured.</div>';return;}el.innerHTML=sites.map(function(s,i){var fences=(s.geofences||[]).map(function(g){return'<div class="info-row"><span>'+g.name+'</span><span>r='+g.radiusMeters+'m</span></div>';}).join('');var teams=(s.teams||[]).map(function(t){return'<div class="info-row"><span>'+t.name+'</span><span>'+t.employeeCount+' members</span></div>';}).join('');return'<div class="site-card" style="margin-bottom:10px"><div class="site-header" onclick="toggleSite('+i+')"><div><div class="site-name">'+(s.name||s.id)+'</div><div class="site-meta" id="sitemeta-'+i+'">Loading…</div></div><span class="site-chevron" id="chevron-'+i+'">›</span></div><div class="site-body" id="sitebody-'+i+'"><div class="sub-section">Geofences</div>'+fences+'<div class="sub-section">Teams</div>'+teams+'</div></div>';}).join('');// Load headcount per site
+sites.forEach(function(s,i){var hc=allEvents.filter(function(e){var last=null;allEvents.filter(function(x){return x.employeeId===e.employeeId&&x.siteId===s.id;}).forEach(function(x){if(!last||new Date(x.timestamp)>new Date(last.timestamp))last=x;});return last&&last.id===e.id&&e.type==='IN'&&e.validationStatus==='VALID';});var meta=document.getElementById('sitemeta-'+i);if(meta)meta.textContent=(s.geofences||[]).length+' zone(s) · '+hc.length+' on site';});}
+
+function toggleSite(i){var body=document.getElementById('sitebody-'+i);var chev=document.getElementById('chevron-'+i);var open=body.classList.toggle('open');chev.classList.toggle('open',open);}
+
+// ── Stats update ──────────────────────────────────────────────────────────
+function updateStats(){var v=allEvents.filter(function(e){return e.validationStatus==='VALID';}).length;var inv=allEvents.filter(function(e){return e.validationStatus==='INVALID';}).length;var pend=allEvents.filter(function(e){return e.validationStatus==='PENDING_APPROVAL';}).length;document.getElementById('st-valid').textContent=v;document.getElementById('st-invalid').textContent=inv;document.getElementById('st-pending').textContent=pend;document.getElementById('st-total').textContent=allEvents.length;}
+
+function updatePendingBadge(){var count=allEvents.filter(function(e){return e.validationStatus==='PENDING_APPROVAL';}).length;var badge=document.getElementById('pending-badge');badge.textContent=count;badge.classList.toggle('show',count>0);}
+
+// ── Approve / Reject ──────────────────────────────────────────────────────
+async function doApprove(id,btn){await doTransition(id,'approve',btn);}
+async function doReject(id,btn){await doTransition(id,'reject',btn);}
+
+async function doTransition(id,action,btn){btn.disabled=true;btn.closest('.approve-row').querySelectorAll('button').forEach(function(b){b.disabled=true;});dbg('i','→ PATCH /api/clocks/'+id+'/'+action);try{var r=await fetch(CFG.url+'/api/clocks/'+id+'/'+action,{method:'PATCH'});if(!r.ok){var errBody={};try{errBody=await r.json();}catch(e){}dbg('e','← '+r.status+' '+JSON.stringify(errBody));var errMsg=r.status===404?ERR.not_found:r.status>=500?ERR.server:action==='approve'?ERR.approve_fail:ERR.reject_fail;showToast(errMsg,'error');btn.closest('.approve-row').querySelectorAll('button').forEach(function(b){b.disabled=false;});return;}var updated=await r.json();dbg('i','← '+r.status+' '+JSON.stringify(updated));var idx=allEvents.findIndex(function(e){return e.id===id;});if(idx!==-1)allEvents[idx]=updated;// Replace card everywhere
+['feed-list','pending-list'].forEach(function(listId){var card=document.getElementById('card-'+id);if(card){if(listId==='pending-list'){card.remove();}else{var newCard=buildCard(updated,'');card.replaceWith(newCard);}}});updateStats();updatePendingBadge();renderPending();showToast(action==='approve'?'Approved ✓':'Rejected — employee notified','success');}catch(e){dbg('e','Transition: '+e.message);showToast(ERR.network,'error');btn.closest('.approve-row').querySelectorAll('button').forEach(function(b){b.disabled=false;});}}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(name){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active');});document.getElementById('panel-'+name).classList.add('active');document.getElementById('nav-'+name).classList.add('active');if(name==='stats')renderStatsPanel();if(name==='pending')renderPending();}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg,cls){clearTimeout(toastTimer);var t=document.getElementById('toast');t.textContent=msg;t.className='show'+(cls?' '+cls:'');toastTimer=setTimeout(function(){t.className='';},3000);}
+
+// ── Settings ──────────────────────────────────────────────────────────────
+function openSettings(){document.getElementById('settings-modal').classList.add('open');}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function saveSettings(){CFG.url=document.getElementById('s-url').value.trim().replace(/\/$/,'')||'http://localhost:8080';CFG.debug=document.getElementById('s-debug').checked;localStorage.setItem('awm_url',CFG.url);localStorage.setItem('awm_debug',CFG.debug);document.body.classList.toggle('debug-mode',CFG.debug);closeSettings();connectSSE();loadAll();}
+
+// ── Offline ───────────────────────────────────────────────────────────────
+function detectOffline(){window.addEventListener('online',function(){document.body.classList.remove('offline');connectSSE();loadAll();});window.addEventListener('offline',function(){document.body.classList.add('offline');});if(!navigator.onLine)document.body.classList.add('offline');}
+
+// ── Debug logger ──────────────────────────────────────────────────────────
+function dbg(level,msg){if(!CFG.debug)return;var panel=document.getElementById('debug-panel');var div=document.createElement('div');div.className='dl'+(level==='e'?' e':level==='w'?' w':'');div.textContent='['+new Date().toTimeString().slice(0,8)+'] '+msg;panel.prepend(div);if(panel.children.length>60)panel.removeChild(panel.lastChild);}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function statusClass(s){if(s==='VALID')return'v';if(s==='INVALID')return'i';return'p';}
+function fmtStatus(s){if(s==='PENDING_APPROVAL')return'PENDING';return s||'—';}
+function fmtTs(ts){if(!ts)return'—';try{var d=new Date(ts);return d.toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit',hour12:false})+' · '+d.toLocaleDateString('en-ZA',{day:'2-digit',month:'short'});}catch(e){return ts;}}
+</script>
+</body>
+</html>
