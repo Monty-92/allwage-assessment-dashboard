@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AllWage">
+<meta name="theme-color" content="#0a0a0a">
+<title>AllWage — Clock In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0a;--surface:#141414;--border:#222;--orange:#ff5500;--orange-d:#7a2800;--green:#00c853;--green-d:#003d19;--red:#ff1744;--red-d:#4d0015;--yellow:#ffd600;--yellow-d:#4d4100;--white:#f0f0f0;--dim:#555;--muted:#333;--bebas:'Bebas Neue',sans-serif;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--white);font-family:var(--sans);overflow:hidden;user-select:none}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+header{padding:calc(var(--safe-top) + 14px) 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:2}
+.wordmark{font-family:var(--bebas);font-size:22px;letter-spacing:.1em;color:var(--orange)}
+.header-right{display:flex;align-items:center;gap:12px}
+.gps-pill{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:4px 10px;font-family:var(--mono);font-size:10px;color:var(--dim);transition:all .3s}
+.gps-pill.good{border-color:#1a4a2a;color:var(--green)}.gps-pill.ok{border-color:#4a3a00;color:var(--yellow)}.gps-pill.poor{border-color:#4a1a00;color:var(--red)}
+.gps-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.gps-pill.good .gps-dot{animation:glow 2s infinite}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.3}}
+.gear-btn{background:none;border:none;color:var(--dim);cursor:pointer;padding:4px;display:flex;align-items:center}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;position:relative;overflow:hidden}
+main::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--muted) 1px,transparent 1px),linear-gradient(90deg,var(--muted) 1px,transparent 1px);background-size:40px 40px;opacity:.08;pointer-events:none}
+.status-block{text-align:center;margin-bottom:32px;transition:all .4s ease}
+.status-label{font-family:var(--bebas);font-size:13px;letter-spacing:.2em;color:var(--dim);margin-bottom:4px}
+.status-value{font-family:var(--bebas);font-size:52px;line-height:1;letter-spacing:.05em;transition:color .4s}
+.status-value.out{color:var(--dim)}.status-value.in{color:var(--green)}
+.status-sub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:6px;min-height:16px}
+.clock-btn{width:100%;max-width:340px;padding:28px 24px;border-radius:16px;border:none;font-family:var(--bebas);font-size:42px;letter-spacing:.12em;cursor:pointer;position:relative;overflow:hidden;transition:transform .12s,box-shadow .2s;-webkit-appearance:none}
+.clock-btn:active{transform:scale(.97)}
+.clock-btn.in-btn{background:var(--orange);color:var(--bg);box-shadow:0 0 40px rgba(255,85,0,.3),0 8px 24px rgba(0,0,0,.4)}
+.clock-btn.out-btn{background:var(--red);color:var(--white);box-shadow:0 0 40px rgba(255,23,68,.3),0 8px 24px rgba(0,0,0,.4)}
+.clock-btn.loading{opacity:.6;pointer-events:none}
+.clock-btn::after{content:'';position:absolute;inset:-2px;border-radius:18px;border:2px solid currentColor;opacity:0;animation:none}
+.clock-btn.in-btn::after{color:var(--orange)}.clock-btn.out-btn::after{color:var(--red)}
+.clock-btn.pulse::after{animation:btnPulse 1.5s ease-out}
+@keyframes btnPulse{0%{opacity:.6;transform:scale(1)}100%{opacity:0;transform:scale(1.06)}}
+.btn-sub{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;margin-top:14px}
+.history-trigger{position:absolute;bottom:calc(var(--safe-bot) + 20px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px 20px;background:none;border:none}
+.drag-handle{width:36px;height:4px;background:var(--muted);border-radius:2px}
+.history-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+#result-overlay{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
+#result-overlay.show{opacity:1;pointer-events:all}
+#result-overlay.valid{background:var(--green-d)}#result-overlay.invalid{background:var(--red-d)}#result-overlay.pending{background:var(--yellow-d)}
+.result-icon{font-size:72px;line-height:1;margin-bottom:20px;animation:iconBounce .4s ease}
+@keyframes iconBounce{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.result-headline{font-family:var(--bebas);font-size:40px;letter-spacing:.08em;margin-bottom:12px}
+#result-overlay.valid .result-headline{color:var(--green)}#result-overlay.invalid .result-headline{color:var(--red)}#result-overlay.pending .result-headline{color:var(--yellow)}
+.result-body{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;max-width:280px}
+.result-dismiss{margin-top:32px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:10px 28px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.6);cursor:pointer;text-transform:uppercase}
+.auto-dismiss-bar{position:absolute;bottom:0;left:0;height:3px;background:rgba(255,255,255,.3);width:100%}
+#result-overlay.show .auto-dismiss-bar{animation:shrink 4s linear forwards}
+@keyframes shrink{from{width:100%}to{width:0%}}
+#history-drawer{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;pointer-events:none}
+#history-backdrop{flex:1;background:rgba(0,0,0,.7);opacity:0;transition:opacity .3s;pointer-events:none}
+#history-sheet{background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;padding:0 0 calc(var(--safe-bot) + 20px);max-height:75vh;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);pointer-events:none;display:flex;flex-direction:column}
+#history-drawer.open #history-backdrop{opacity:1;pointer-events:all}
+#history-drawer.open #history-sheet{transform:translateY(0);pointer-events:all}
+.sheet-handle{width:36px;height:4px;background:var(--muted);border-radius:2px;margin:14px auto 0;flex-shrink:0}
+.sheet-title{font-family:var(--bebas);font-size:20px;letter-spacing:.1em;color:var(--orange);padding:12px 20px 10px;flex-shrink:0}
+.history-list{overflow-y:auto;flex:1;padding:0 16px;-webkit-overflow-scrolling:touch}
+.history-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.h-type-badge{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--bebas);font-size:14px;letter-spacing:.05em;flex-shrink:0}
+.h-type-badge.IN{background:var(--green-d);color:var(--green)}.h-type-badge.OUT{background:var(--orange-d);color:var(--orange)}
+.h-details{flex:1;min-width:0}
+.h-site{font-weight:600;font-size:13px}.h-time{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
+.h-status{font-family:var(--mono);font-size:9px;font-weight:500;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+.h-status.VALID{background:var(--green-d);color:var(--green)}.h-status.INVALID{background:var(--red-d);color:var(--red)}.h-status.PENDING_APPROVAL{background:var(--yellow-d);color:var(--yellow)}
+.empty-history{padding:40px 20px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--dim);line-height:1.8}
+#offline-banner{position:fixed;top:0;left:0;right:0;background:#4a1a00;border-bottom:1px solid var(--orange);padding:calc(var(--safe-top) + 8px) 16px 8px;font-family:var(--mono);font-size:11px;color:var(--orange);text-align:center;z-index:60;display:none}
+body.offline #offline-banner{display:block}
+#settings-modal{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.8);display:none;align-items:flex-end}
+#settings-modal.open{display:flex}
+.settings-sheet{background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;width:100%;padding:20px 20px calc(20px + var(--safe-bot));display:flex;flex-direction:column;gap:16px;animation:sheetUp .25s ease}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.settings-title{font-family:var(--bebas);font-size:22px;letter-spacing:.1em;color:var(--orange);display:flex;justify-content:space-between;align-items:center}
+.close-btn{width:28px;height:28px;border-radius:50%;background:var(--muted);border:none;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+.field-group{display:flex;flex-direction:column;gap:6px}
+.field-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim)}
+select,input[type="text"],input[type="url"]{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:var(--mono);font-size:13px;padding:10px 12px;width:100%;appearance:none;-webkit-appearance:none}
+select:focus,input:focus{outline:none;border-color:var(--orange)}
+.select-wrap{position:relative}.select-wrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none}
+.save-btn{width:100%;padding:14px;background:var(--orange);border:none;border-radius:10px;color:var(--bg);font-family:var(--bebas);font-size:20px;letter-spacing:.12em;cursor:pointer}
+.field-hint{font-size:11px;color:var(--dim);font-family:var(--mono);line-height:1.6}
+#debug-panel{position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1a3a1a;padding:8px 12px calc(var(--safe-bot) + 8px);font-family:var(--mono);font-size:10px;color:#00c853;max-height:140px;overflow-y:auto;display:none;z-index:30;-webkit-overflow-scrolling:touch}
+body.debug-mode #debug-panel{display:block}
+.debug-line{padding:1px 0;border-bottom:1px solid #111}.debug-line.err{color:var(--red)}.debug-line.warn{color:var(--yellow)}
+</style>
+</head>
+<body>
+<div id="offline-banner">NO CONNECTION — Check your internet connection</div>
+<div id="app">
+  <header>
+    <div class="wordmark">ALLWAGE</div>
+    <div class="header-right">
+      <div class="gps-pill" id="gps-pill"><div class="gps-dot"></div><span id="gps-text">LOCATING</span></div>
+      <button class="gear-btn" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+  </header>
+  <main>
+    <div class="status-block">
+      <div class="status-label">CURRENT STATUS</div>
+      <div class="status-value out" id="status-value">CLOCKED OUT</div>
+      <div class="status-sub" id="status-sub">—</div>
+    </div>
+    <button class="clock-btn in-btn" id="clock-btn" onclick="handleClockAction()">CLOCK IN</button>
+    <div class="btn-sub" id="btn-sub">Tap to record your arrival</div>
+  </main>
+  <button class="history-trigger" onclick="openHistory()">
+    <div class="drag-handle"></div>
+    <div class="history-label">View History</div>
+  </button>
+</div>
+
+<div id="result-overlay" onclick="dismissResult()">
+  <div class="result-icon" id="result-icon"></div>
+  <div class="result-headline" id="result-headline"></div>
+  <div class="result-body" id="result-body"></div>
+  <button class="result-dismiss">Tap to dismiss</button>
+  <div class="auto-dismiss-bar"></div>
+</div>
+
+<div id="history-drawer">
+  <div id="history-backdrop" onclick="closeHistory()"></div>
+  <div id="history-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">MY HISTORY</div>
+    <div class="history-list" id="history-list"><div class="empty-history">Loading your history…</div></div>
+  </div>
+</div>
+
+<div id="settings-modal">
+  <div class="settings-sheet">
+    <div class="settings-title">SETTINGS <button class="close-btn" onclick="closeSettings()">✕</button></div>
+    <div class="field-group">
+      <div class="field-label">Backend URL</div>
+      <input type="url" id="s-url" placeholder="http://localhost:8080">
+      <div class="field-hint">Local: http://localhost:8080 · ngrok: https://…ngrok-free.app</div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Employee (demo)</div>
+      <div class="select-wrap"><select id="s-employee">
+        <option value="emp-alice">Alice — Day Shift</option>
+        <option value="emp-bob">Bob — Contractors (strict 10m)</option>
+        <option value="emp-john">John — Contractors (extended 50m)</option>
+      </select></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Site (demo)</div>
+      <div class="select-wrap"><select id="s-site"><option value="site-alpha">Alpha Construction</option></select></div>
+    </div>
+    <div class="field-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="s-debug" style="width:16px;height:16px;accent-color:var(--orange);">
+        <span class="field-label" style="margin:0">Debug mode</span>
+      </label>
+    </div>
+    <button class="save-btn" onclick="saveSettings()">SAVE</button>
+  </div>
+</div>
+
+<div id="debug-panel"></div>
+
+<script>
+var CFG={url:localStorage.getItem('aw_url')||'http://localhost:8080',employee:localStorage.getItem('aw_employee')||'emp-alice',site:localStorage.getItem('aw_site')||'site-alpha',debug:localStorage.getItem('aw_debug')==='true'};
+var gpsCoords=null,gpsAccuracy=null,clockedIn=false,clockInTime=null,clockInSite=null,timerHandle=null,dismissHandle=null;
+var ERR={network:"Can't reach AllWage. Check you're connected to the internet.",server:"AllWage is having trouble right now. Please try again in a moment.",not_found:"Your employee profile wasn't found. Ask your manager to check your account.",site_not_found:"Site not found. Contact your manager.",bad_request:"Something went wrong with your request. Try again or contact support.",already_clocked:"This clock event was already recorded.",gps_denied:"Location access was blocked. Go to Settings and allow location for this browser.",gps_unavailable:"Couldn't get your location. Step outside and try again.",gps_timeout:"Location timed out. Make sure GPS is on and try again.",no_gps:"Waiting for your location. Hold on a moment.",geofence:"You're outside the job site boundary. Make sure you're physically at the site and try again.",outside_hours:"Clock-ins aren't open right now. Working hours are 06:00–18:00.",pending:"Your clock-in needs manager approval. You'll receive a WhatsApp message when it's confirmed.",generic_invalid:"Your clock-in couldn't be validated. Contact your site manager if this continues."};
+
+document.addEventListener('DOMContentLoaded',function(){applyConfig();startGPS();loadLastState();detectOffline();});
+
+function applyConfig(){document.getElementById('s-url').value=CFG.url;document.getElementById('s-employee').value=CFG.employee;document.getElementById('s-site').value=CFG.site;document.getElementById('s-debug').checked=CFG.debug;document.body.classList.toggle('debug-mode',CFG.debug);}
+
+function startGPS(){if(!navigator.geolocation){setGPSStatus('poor','NO GPS');return;}navigator.geolocation.watchPosition(function(pos){gpsCoords={lat:pos.coords.latitude,lon:pos.coords.longitude};gpsAccuracy=pos.coords.accuracy;var acc=Math.round(gpsAccuracy);if(acc<=20)setGPSStatus('good','±'+acc+'m');else if(acc<=50)setGPSStatus('ok','±'+acc+'m');else setGPSStatus('poor','±'+acc+'m POOR');},function(err){var msg=err.code===1?'DENIED':err.code===2?'UNAVAIL':'TIMEOUT';setGPSStatus('poor',msg);dbg('warn','GPS: '+err.message);},{enableHighAccuracy:true,timeout:15000,maximumAge:5000});}
+
+function setGPSStatus(cls,text){document.getElementById('gps-pill').className='gps-pill '+cls;document.getElementById('gps-text').textContent=text;}
+
+function loadLastState(){var saved=localStorage.getItem('aw_state');if(!saved)return;try{var s=JSON.parse(saved);if(s.clockedIn){clockedIn=true;clockInTime=new Date(s.since);clockInSite=s.site;setUIState('in');startTimer();}}catch(e){}}
+
+function saveState(){if(clockedIn)localStorage.setItem('aw_state',JSON.stringify({clockedIn:true,since:clockInTime,site:clockInSite}));else localStorage.removeItem('aw_state');}
+
+function setUIState(state){var btn=document.getElementById('clock-btn'),status=document.getElementById('status-value'),sub=document.getElementById('status-sub'),btnSub=document.getElementById('btn-sub');if(state==='in'){btn.className='clock-btn out-btn';btn.textContent='CLOCK OUT';status.className='status-value in';status.textContent='ON SITE';btnSub.textContent='Tap to record your departure';}else if(state==='out'){btn.className='clock-btn in-btn';btn.textContent='CLOCK IN';status.className='status-value out';status.textContent='CLOCKED OUT';sub.textContent=clockInSite?'Last: '+clockInSite:'—';btnSub.textContent='Tap to record your arrival';if(timerHandle){clearInterval(timerHandle);timerHandle=null;}}else if(state==='loading'){btn.classList.add('loading');btn.textContent='…';}}
+
+function startTimer(){var sub=document.getElementById('status-sub');function tick(){var diff=Date.now()-clockInTime;var h=Math.floor(diff/3600000);var m=Math.floor((diff%3600000)/60000);sub.textContent=h+'h '+String(m).padStart(2,'0')+'m on site';}tick();timerHandle=setInterval(tick,30000);}
+
+async function handleClockAction(){if(!gpsCoords){showResult('invalid','📍','LOCATION NEEDED',ERR.no_gps);return;}var type=clockedIn?'OUT':'IN';var btn=document.getElementById('clock-btn');var orig=btn.textContent;btn.classList.add('loading');btn.textContent='…';var now=new Date();var pad=function(n){return String(n).padStart(2,'0');};var ts=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds())+'+02:00';var body={employeeId:CFG.employee,siteId:CFG.site,timestamp:ts,latitude:gpsCoords.lat,longitude:gpsCoords.lon,accuracyMeters:gpsAccuracy||10,type:type};dbg('info','→ POST /api/clocks '+JSON.stringify(body));try{var r=await fetch(CFG.url+'/api/clocks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await r.json();dbg('info','← '+r.status+' '+JSON.stringify(data));btn.classList.remove('loading');btn.textContent=orig;if(!r.ok){handleHTTPError(r.status,data);return;}handleClockResponse(data,type);}catch(e){btn.classList.remove('loading');btn.textContent=orig;dbg('err','Network: '+e.message);showResult('invalid','📡','NO CONNECTION',ERR.network);}}
+
+function handleHTTPError(status,data){if(status===404){var msg=(data&&data.message||'').toLowerCase();if(msg.includes('site'))showResult('invalid','🏗','SITE NOT FOUND',ERR.site_not_found);else showResult('invalid','👤','NOT FOUND',ERR.not_found);}else if(status===400){showResult('invalid','⚠️','REQUEST ERROR',ERR.bad_request);}else if(status===409){showResult('invalid','🔁','ALREADY RECORDED',ERR.already_clocked);}else{showResult('invalid','🔧','SERVER ERROR',ERR.server);}}
+
+function handleClockResponse(data,type){var status=data.validationStatus;var reason=(data.validationReason||'').toLowerCase();if(status==='VALID'){if(type==='IN'){clockedIn=true;clockInTime=new Date();clockInSite=data.siteId||CFG.site;setUIState('in');startTimer();saveState();showResult('valid','✅','CLOCKED IN','Welcome to '+clockInSite+'.\nYou\'re good to go.');}else{clockedIn=false;setUIState('out');saveState();showResult('valid','✅','CLOCKED OUT','Have a safe trip home.\nYour hours have been recorded.');}triggerBtnPulse();}else if(status==='PENDING_APPROVAL'){if(type==='IN'){clockedIn=true;clockInTime=new Date();clockInSite=data.siteId||CFG.site;setUIState('in');startTimer();saveState();}showResult('pending','⏳','AWAITING APPROVAL',ERR.pending);}else{var msg=ERR.generic_invalid;if(reason.includes('geofence')||reason.includes('distance')||reason.includes('outside'))msg=ERR.geofence;else if(reason.includes('hour')||reason.includes('time')||reason.includes('active'))msg=ERR.outside_hours;showResult('invalid','❌','CLOCK-IN FAILED',msg);}}
+
+function triggerBtnPulse(){var btn=document.getElementById('clock-btn');btn.classList.add('pulse');setTimeout(function(){btn.classList.remove('pulse');},1600);}
+
+function showResult(type,icon,headline,body){clearTimeout(dismissHandle);document.getElementById('result-icon').textContent=icon;document.getElementById('result-headline').textContent=headline;document.getElementById('result-body').textContent=body;var overlay=document.getElementById('result-overlay');overlay.className='show '+type;dismissHandle=setTimeout(dismissResult,4000);}
+
+function dismissResult(){clearTimeout(dismissHandle);document.getElementById('result-overlay').className='';}
+
+async function openHistory(){document.getElementById('history-drawer').classList.add('open');var list=document.getElementById('history-list');list.innerHTML='<div class="empty-history">Loading…</div>';try{var r=await fetch(CFG.url+'/api/clocks');var data=await r.json();var mine=data.filter(function(e){return e.employeeId===CFG.employee;}).sort(function(a,b){return new Date(b.timestamp)-new Date(a.timestamp);}).slice(0,20);if(!mine.length){list.innerHTML='<div class="empty-history">No clock events yet.\nYour history will appear here.</div>';return;}list.innerHTML=mine.map(function(e){return'<div class="history-item"><div class="h-type-badge '+e.type+'">'+e.type+'</div><div class="h-details"><div class="h-site">'+(e.siteId||'—')+'</div><div class="h-time">'+formatTs(e.timestamp)+'</div></div><div class="h-status '+(e.validationStatus||'')+'">'+fmtStatus(e.validationStatus)+'</div></div>';}).join('');}catch(err){list.innerHTML='<div class="empty-history">Couldn\'t load history.\nCheck your connection.</div>';dbg('err','History: '+err.message);}}
+
+function closeHistory(){document.getElementById('history-drawer').classList.remove('open');}
+
+function openSettings(){document.getElementById('settings-modal').classList.add('open');}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function saveSettings(){CFG.url=document.getElementById('s-url').value.trim().replace(/\/$/,'')||'http://localhost:8080';CFG.employee=document.getElementById('s-employee').value;CFG.site=document.getElementById('s-site').value;CFG.debug=document.getElementById('s-debug').checked;localStorage.setItem('aw_url',CFG.url);localStorage.setItem('aw_employee',CFG.employee);localStorage.setItem('aw_site',CFG.site);localStorage.setItem('aw_debug',CFG.debug);document.body.classList.toggle('debug-mode',CFG.debug);closeSettings();}
+
+function detectOffline(){window.addEventListener('online',function(){document.body.classList.remove('offline');});window.addEventListener('offline',function(){document.body.classList.add('offline');});if(!navigator.onLine)document.body.classList.add('offline');}
+
+function dbg(level,msg){if(!CFG.debug)return;var panel=document.getElementById('debug-panel');var div=document.createElement('div');div.className='debug-line'+(level==='err'?' err':level==='warn'?' warn':'');var t=new Date().toTimeString().slice(0,8);div.textContent='['+t+'] '+msg;panel.prepend(div);if(panel.children.length>50)panel.removeChild(panel.lastChild);}
+
+function formatTs(ts){if(!ts)return'—';try{var d=new Date(ts);return d.toLocaleDateString('en-ZA',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit',hour12:false});}catch(e){return ts;}}
+function fmtStatus(s){if(s==='PENDING_APPROVAL')return'PENDING';return s||'—';}
+</script>
+</body>
+</html>
